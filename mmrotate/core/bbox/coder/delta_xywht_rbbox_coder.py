@@ -21,17 +21,18 @@ class DeltaXYWHTRBBoxCoder(BaseBBoxCoder):
             delta coordinates
         target_stds (Sequence[float]): Denormalizing standard deviation of
             target for delta coordinates
-        angle_version (str, optional): Angle representations. Defaults to 'oc'.
-        norm_factor (None|float, optional): Regularization factor of angle.
-        edge_swap (bool, optional): Whether swap the edge if w < h.
+        angle_range (str): Angle representations. Defaults to 'oc'.
+        norm_factor (float, optional): Regularization factor of angle.
+        edge_swap (bool): Whether swap the edge if w < h.
             Defaults to False.
-        proj_xy (bool, optional): Whether project x and y according to angle.
-            Defaults to False.
+        clip_border (bool): Whether clip the objects outside the
+            border of the image. Defaults to True.
         add_ctr_clamp (bool): Whether to add center clamp, when added, the
             predicted box is clamped is its center is too far away from
-            the original anchor's center. Only used by YOLOF. Default False.
+            the original anchor's center. Only used by YOLOF.
+            Defaults to False.
         ctr_clamp (int): the maximum pixel shift to clamp. Only used by
-            YOLOF. Default 32.
+            YOLOF. Defaults to 32.
     """
     encode_bbox_dim = 5
     decode_bbox_dim = 5
