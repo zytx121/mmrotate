@@ -34,8 +34,9 @@ class DeltaXYWHTRBBoxCoder(BaseBBoxCoder):
         ctr_clamp (int): the maximum pixel shift to clamp. Only used by
             YOLOF. Defaults to 32.
     """
-    encode_bbox_dim = 5
-    decode_bbox_dim = 5
+    encode_size = 5
+    decode_size = 5
+    decoded_box_type = 'rbox'
 
     def __init__(self,
                  target_means=(0., 0., 0., 0., 0.),

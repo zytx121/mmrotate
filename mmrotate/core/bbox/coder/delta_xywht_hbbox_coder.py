@@ -3,11 +3,11 @@ import mmcv
 import numpy as np
 import torch
 from mmdet.models.task_modules.coders.base_bbox_coder import BaseBBoxCoder
+from mmdet.structures.bbox import BaseBoxes
 
 from mmrotate.core.bbox.structures import RotatedBoxes
 from mmrotate.registry import TASK_UTILS
 from mmrotate.structures.bbox import norm_angle
-from mmdet.structures.bbox import BaseBoxes
 
 
 @TASK_UTILS.register_module()
@@ -31,13 +31,14 @@ class DeltaXYWHTHBBoxCoder(BaseBBoxCoder):
             border of the image. Defaults to True.
         add_ctr_clamp (bool): Whether to add center clamp, when added, the
             predicted box is clamped is its center is too far away from
-            the original anchor's center. Only used by YOLOF. 
+            the original anchor's center. Only used by YOLOF.
             Defaults to False.
         ctr_clamp (int): the maximum pixel shift to clamp. Only used by
             YOLOF. Defaults to 32.
     """
     encode_size = 5
     decode_size = 5
+    decoded_box_type = 'rbox'
 
     def __init__(self,
                  target_means=(0., 0., 0., 0., 0.),
@@ -235,7 +236,8 @@ def delta2bbox(rois,
     if num_bboxes == 0:
         return RotatedBoxes(deltas)
 
-    rois = rois.tensor
+    if isinstance(rois, BaseBoxes):
+        rois = rois.tensor
     means = deltas.new_tensor(means).view(1, -1)
     stds = deltas.new_tensor(stds).view(1, -1)
     delta_shape = deltas.shape
@@ -251,13 +253,12 @@ def delta2bbox(rois,
     if norm_factor:
         da *= norm_factor * np.pi
 
-    x1, y1, x2, y2 = rois.unbind(dim=-1)
     # Compute center of each roi
-    px = ((x1 + x2) * 0.5).unsqueeze(-1).expand_as(dx)
-    py = ((y1 + y2) * 0.5).unsqueeze(-1).expand_as(dy)
+    px = ((rois[..., None, None, 0] + rois[..., None, None, 2]) * 0.5)
+    py = ((rois[..., None, None, 1] + rois[..., None, None, 3]) * 0.5)
     # Compute width/height of each roi
-    pw = (x2 - x1).unsqueeze(-1).expand_as(dw)
-    ph = (y2 - y1).unsqueeze(-1).expand_as(dh)
+    pw = (rois[..., None, None, 2] - rois[..., None, None, 0])
+    ph = (rois[..., None, None, 3] - rois[..., None, None, 1])
 
     dx_width = pw * dx
     dy_height = ph * dy
@@ -283,9 +284,11 @@ def delta2bbox(rois,
         h_regular = torch.where(gw > gh, gh, gw)
         theta_regular = torch.where(gw > gh, ga, ga + np.pi / 2)
         theta_regular = norm_angle(theta_regular, angle_version)
-        decoded_bbox =  torch.stack([gx, gy, w_regular, h_regular, theta_regular],
-                           dim=-1).view_as(deltas)
+        decoded_bbox = torch.stack(
+            [gx, gy, w_regular, h_regular, theta_regular],
+            dim=-1).view_as(deltas)
     else:
-        decoded_bbox =  torch.stack([gx, gy, gw, gh, ga], dim=-1).view_as(deltas)
+        decoded_bbox = torch.stack([gx, gy, gw, gh, ga],
+                                   dim=-1).view_as(deltas)
 
     return RotatedBoxes(decoded_bbox)
