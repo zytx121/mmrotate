@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Union
 
 import numpy as np
 import torch
 from mmdet.models.task_modules.coders.base_bbox_coder import BaseBBoxCoder
-from mmdet.structures.bbox import HorizontalBoxes
+from mmdet.structures.bbox import HorizontalBoxes, get_box_tensor
 from torch import Tensor
 
 from mmrotate.core.bbox.structures import RotatedBoxes
@@ -82,14 +82,14 @@ class DeltaXYWHTHBBoxCoder(BaseBBoxCoder):
             raise NotImplementedError
 
     def decode(self,
-               bboxes: HorizontalBoxes,
+               bboxes: Union[HorizontalBoxes, Tensor],
                pred_bboxes: Tensor,
                max_shape: Optional[Sequence[int]] = None,
                wh_ratio_clip: float = 16 / 1000) -> RotatedBoxes:
         """Apply transformation `pred_bboxes` to `boxes`.
 
         Args:
-            bboxes (:obj:`HorizontalBoxes`): Basic boxes.
+            bboxes (:obj:`HorizontalBoxes` or Tensor): Basic boxes.
                 Shape (B, N, 4) or (N, 4)
             pred_bboxes (Tensor): Encoded offsets with respect to each
                 roi. Has shape (B, N, num_classes * 5) or (B, N, 5) or
@@ -190,7 +190,7 @@ def bbox2delta(proposals: HorizontalBoxes,
     return deltas
 
 
-def delta2bbox(rois: HorizontalBoxes,
+def delta2bbox(rois: Union[HorizontalBoxes, Tensor],
                deltas: Tensor,
                means: Sequence[float] = (0., 0., 0., 0., 0.),
                stds: Sequence[float] = (1., 1., 1., 1., 1.),
@@ -206,7 +206,7 @@ def delta2bbox(rois: HorizontalBoxes,
     :func:`bbox2delta`.
 
     Args:
-        rois (:obj:`HorizontalBoxes`): Boxes to be transformed.
+        rois (:obj:`HorizontalBoxes` or Tensor): Boxes to be transformed.
             Has shape (N, 4).
         deltas (Tensor): Encoded offsets relative to each roi.
             Has shape (N, num_classes * 5) or (N, 5). Note
@@ -237,7 +237,7 @@ def delta2bbox(rois: HorizontalBoxes,
     if num_bboxes == 0:
         return RotatedBoxes(deltas)
 
-    rois = rois.tensor
+    rois = get_box_tensor(rois)
     means = deltas.new_tensor(means).view(1, -1)
     stds = deltas.new_tensor(stds).view(1, -1)
     delta_shape = deltas.shape
