@@ -140,6 +140,8 @@ class Rotate(BaseTransform):
 
     def _transform_bboxes(self, results: dict) -> None:
         """Rotate the bboxes."""
+        if len(results['gt_bboxes']) == 0:
+            return
         img_shape = results['img_shape']
         center = (img_shape[1] * 0.5, img_shape[0] * 0.5)
         results['gt_bboxes'].rotate_(center, self.rotate_angle)
@@ -150,6 +152,8 @@ class Rotate(BaseTransform):
         height, width = results['img_shape']
         if 'gt_bboxes' in results:
             bboxes = results['gt_bboxes']
+            if len(bboxes) == 0:
+                return
             valid_index = results['gt_bboxes'].is_inside([height,
                                                           width]).numpy()
             results['gt_bboxes'] = bboxes[valid_index]

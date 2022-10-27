@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'CocoRboxDataset'
-data_root = 'data/split_ss_dota/'
+data_root = '/home/featurize/data/split_ss_dota/'
 file_client_args = dict(backend='disk')
 
 color_space = [
@@ -15,14 +15,6 @@ color_space = [
     [dict(type='mmdet.Brightness')],
 ]
 
-geometric = [
-    [dict(type='mmdet.Rotate')],
-    [dict(type='mmdet.ShearX')],
-    [dict(type='mmdet.ShearY')],
-    [dict(type='mmdet.TranslateX')],
-    [dict(type='mmdet.TranslateY')],
-]
-
 scale = [(1333, 768), (1333, 1280)]
 
 branch_field = ['sup', 'unsup_teacher', 'unsup_student']
@@ -32,7 +24,11 @@ sup_pipeline = [
     dict(type='mmdet.LoadImageFromFile', file_client_args=file_client_args),
     dict(type='mmdet.LoadAnnotations', with_bbox=True, box_type='qbox'),
     dict(type='ConvertBoxType', box_type_mapping=dict(gt_bboxes='rbox')),
-    dict(type='mmdet.RandomResize', scale=scale, keep_ratio=True, resize_type='mmdet.Resize'),
+    dict(
+        type='mmdet.RandomResize',
+        scale=scale,
+        keep_ratio=True,
+        resize_type='mmdet.Resize'),
     dict(
         type='mmdet.RandomFlip',
         prob=0.75,
@@ -48,7 +44,11 @@ sup_pipeline = [
 # pipeline used to augment unlabeled data weakly,
 # which will be sent to teacher model for predicting pseudo instances.
 weak_pipeline = [
-    dict(type='mmdet.RandomResize', scale=scale, keep_ratio=True, resize_type='mmdet.Resize'),
+    dict(
+        type='mmdet.RandomResize',
+        scale=scale,
+        keep_ratio=True,
+        resize_type='mmdet.Resize'),
     dict(
         type='mmdet.RandomFlip',
         prob=0.75,
@@ -63,7 +63,11 @@ weak_pipeline = [
 # pipeline used to augment unlabeled data strongly,
 # which will be sent to student model for unsupervised training.
 strong_pipeline = [
-    dict(type='mmdet.RandomResize', scale=scale, keep_ratio=True, resize_type='mmdet.Resize'),
+    dict(
+        type='mmdet.RandomResize',
+        scale=scale,
+        keep_ratio=True,
+        resize_type='mmdet.Resize'),
     dict(
         type='mmdet.RandomFlip',
         prob=0.75,
@@ -72,7 +76,11 @@ strong_pipeline = [
         type='mmdet.RandomOrder',
         transforms=[
             dict(type='mmdet.RandAugment', aug_space=color_space, aug_num=1),
-            dict(type='mmdet.RandAugment', aug_space=geometric, aug_num=1),
+            dict(
+                type='RandomRotate',
+                prob=1.0,
+                angle_range=180,
+                rect_obj_labels=[9, 11]),
         ]),
     dict(type='mmdet.FilterAnnotations', min_gt_bbox_wh=(1e-2, 1e-2)),
     dict(
@@ -107,7 +115,7 @@ test_pipeline = [
 ]
 
 batch_size = 2
-num_workers = 2
+num_workers = 4
 # There are two common semi-supervised learning settings on the dota dataset：
 # (1) Divide the train2017 into labeled and unlabeled datasets
 # by a fixed percentage, such as 1%, 2%, 5% and 10%.
@@ -144,7 +152,8 @@ train_dataloader = dict(
         batch_size=batch_size,
         source_ratio=[1, 1]),
     dataset=dict(
-        type='mmdet.ConcatDataset', datasets=[labeled_dataset, unlabeled_dataset]))
+        type='mmdet.ConcatDataset',
+        datasets=[labeled_dataset, unlabeled_dataset]))
 
 val_dataloader = dict(
     batch_size=1,
