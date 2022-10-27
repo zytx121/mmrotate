@@ -1,6 +1,5 @@
 _base_ = [
-    '../_base_/datasets/coco_rbox.py', '../_base_/schedules/schedule_6x.py',
-    '../_base_/default_runtime.py'
+    '../_base_/datasets/coco_rbox.py', '../_base_/default_runtime.py'
 ]
 
 angle_version = 'le90'
@@ -88,7 +87,6 @@ model = dict(
                 min_pos_iou=0.3,
                 match_low_quality=True,
                 ignore_iof_thr=-1,
-                # gpu_assign_thr=200,
                 iou_calculator=dict(type='RBbox2HBboxOverlaps2D')),
             sampler=dict(
                 type='mmdet.RandomSampler',
@@ -134,10 +132,33 @@ model = dict(
             nms=dict(type='nms_rotated', iou_threshold=0.1),
             max_per_img=2000)))
 
-optim_wrapper = dict(optimizer=dict(lr=0.005))
+# training schedule for 25k
+train_cfg = dict(
+    type='IterBasedTrainLoop', max_iters=25000, val_interval=25000)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
 
-default_hooks = dict(logger=dict(interval=10))
-train_cfg = dict(val_interval=72)
+# learning rate policy
+param_scheduler = [
+    dict(
+        type='LinearLR', start_factor=0.001, by_epoch=False, begin=0, end=500),
+    dict(
+        type='MultiStepLR',
+        begin=0,
+        end=25000,
+        by_epoch=False,
+        milestones=[20000, 23000],
+        gamma=0.1)
+]
+
+# optimizer
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(type='SGD', lr=0.005, momentum=0.9, weight_decay=0.0001))
+
+default_hooks = dict(
+    checkpoint=dict(by_epoch=False, interval=1000, max_keep_ckpts=2))
+log_processor = dict(by_epoch=False)
 
 color_space = [
     [dict(type='mmdet.ColorTransform')],
@@ -151,33 +172,24 @@ color_space = [
     [dict(type='mmdet.Brightness')],
 ]
 
-geometric = [
-    [dict(type='mmdet.Rotate')],
-    [dict(type='mmdet.ShearX')],
-    [dict(type='mmdet.ShearY')],
-    [dict(type='mmdet.TranslateX')],
-    [dict(type='mmdet.TranslateY')],
-]
-
 scale = [(1333, 768), (1333, 1280)]
 
 train_pipeline = [
     dict(type='mmdet.LoadImageFromFile', file_client_args={{_base_.file_client_args}}),
     dict(type='mmdet.LoadAnnotations', with_bbox=True, box_type='qbox'),
     dict(type='ConvertBoxType', box_type_mapping=dict(gt_bboxes='rbox')),
-    dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
-    # dict(type='mmdet.RandomResize', scale=scale, keep_ratio=True, resize_type='mmdet.Resize'),
+    # dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
+    dict(type='mmdet.RandomResize', scale=scale, keep_ratio=True, resize_type='mmdet.Resize'),
     dict(
         type='mmdet.RandomFlip',
         prob=0.75,
         direction=['horizontal', 'vertical', 'diagonal']),
-    # dict(type='mmdet.RandAugment', aug_space=color_space, aug_num=1),
-    # dict(
-    #     type='mmdet.RandomOrder',
-    #     transforms=[
-    #         dict(type='mmdet.RandAugment', aug_space=color_space, aug_num=1),
-    #         dict(type='mmdet.RandAugment', aug_space=geometric, aug_num=1),
-    #     ]),
+    dict(type='mmdet.RandAugment', aug_space=color_space, aug_num=1),
+    dict(
+        type='RandomRotate',
+        prob=0.5,
+        angle_range=180,
+        rect_obj_labels=[9, 11]),
     dict(type='mmdet.FilterAnnotations', min_gt_bbox_wh=(1e-2, 1e-2)),
     dict(type='mmdet.PackDetInputs')
 ]

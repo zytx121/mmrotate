@@ -1,6 +1,4 @@
-_base_ = [
-    '../_base_/datasets/coco_rbox.py', '../_base_/default_runtime.py'
-]
+_base_ = ['../_base_/datasets/coco_rbox.py', '../_base_/default_runtime.py']
 
 angle_version = 'le90'
 model = dict(
@@ -133,8 +131,7 @@ model = dict(
             max_per_img=2000)))
 
 # training schedule for 5k
-train_cfg = dict(
-    type='IterBasedTrainLoop', max_iters=5000, val_interval=5000)
+train_cfg = dict(type='IterBasedTrainLoop', max_iters=5000, val_interval=5000)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 

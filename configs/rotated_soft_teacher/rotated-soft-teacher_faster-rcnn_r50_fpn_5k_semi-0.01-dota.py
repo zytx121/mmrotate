@@ -1,8 +1,5 @@
-_base_ = [
-    '../_base_/default_runtime.py', '../_base_/datasets/semi_dota.py'
-]
+_base_ = ['../_base_/default_runtime.py', '../_base_/datasets/semi_dota.py']
 angle_version = 'le90'
-
 
 detector = dict(
     type='mmdet.FasterRCNN',
@@ -133,7 +130,7 @@ detector = dict(
             nms=dict(type='nms_rotated', iou_threshold=0.1),
             max_per_img=2000)))
 
-data_preprocessor=dict(
+data_preprocessor = dict(
     type='mmdet.DetDataPreprocessor',
     mean=[123.675, 116.28, 103.53],
     std=[58.395, 57.12, 57.375],
@@ -171,8 +168,7 @@ train_dataloader = dict(
     dataset=dict(datasets=[labeled_dataset, unlabeled_dataset]))
 
 # training schedule for 5k
-train_cfg = dict(
-    type='IterBasedTrainLoop', max_iters=5000, val_interval=5000)
+train_cfg = dict(type='IterBasedTrainLoop', max_iters=5000, val_interval=5000)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 

@@ -1,6 +1,4 @@
-_base_ = [
-    '../_base_/datasets/coco_rbox.py', '../_base_/default_runtime.py'
-]
+_base_ = ['../_base_/datasets/coco_rbox.py', '../_base_/default_runtime.py']
 
 angle_version = 'le90'
 model = dict(

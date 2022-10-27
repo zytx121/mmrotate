@@ -1,10 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 
-from mmrotate.registry import MODELS
-from mmdet.structures import SampleList
 from mmdet.models.detectors import SemiBaseDetector
+from mmdet.structures import SampleList
+
+from mmrotate.registry import MODELS
 from mmrotate.structures.bbox import RotatedBoxes
+
 
 @MODELS.register_module()
 class RotatedSemiBaseDetector(SemiBaseDetector):
