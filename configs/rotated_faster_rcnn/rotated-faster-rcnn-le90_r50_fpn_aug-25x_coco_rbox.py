@@ -178,7 +178,6 @@ train_pipeline = [
     dict(type='mmdet.LoadImageFromFile', file_client_args={{_base_.file_client_args}}),
     dict(type='mmdet.LoadAnnotations', with_bbox=True, box_type='qbox'),
     dict(type='ConvertBoxType', box_type_mapping=dict(gt_bboxes='rbox')),
-    # dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
     dict(type='mmdet.RandomResize', scale=scale, keep_ratio=True, resize_type='mmdet.Resize'),
     dict(
         type='mmdet.RandomFlip',
