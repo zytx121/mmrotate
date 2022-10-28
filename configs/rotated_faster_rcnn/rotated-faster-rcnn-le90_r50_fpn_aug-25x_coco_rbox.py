@@ -1,6 +1,4 @@
-_base_ = [
-    '../_base_/datasets/coco_rbox.py', '../_base_/default_runtime.py'
-]
+_base_ = ['../_base_/datasets/coco_rbox.py', '../_base_/default_runtime.py']
 
 angle_version = 'le90'
 model = dict(
@@ -175,10 +173,16 @@ color_space = [
 scale = [(1333, 768), (1333, 1280)]
 
 train_pipeline = [
-    dict(type='mmdet.LoadImageFromFile', file_client_args={{_base_.file_client_args}}),
+    dict(
+        type='mmdet.LoadImageFromFile',
+        file_client_args={{_base_.file_client_args}}),
     dict(type='mmdet.LoadAnnotations', with_bbox=True, box_type='qbox'),
     dict(type='ConvertBoxType', box_type_mapping=dict(gt_bboxes='rbox')),
-    dict(type='mmdet.RandomResize', scale=scale, keep_ratio=True, resize_type='mmdet.Resize'),
+    dict(
+        type='mmdet.RandomResize',
+        scale=scale,
+        keep_ratio=True,
+        resize_type='mmdet.Resize'),
     dict(
         type='mmdet.RandomFlip',
         prob=0.75,

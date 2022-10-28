@@ -212,12 +212,16 @@ class RotatedBoxes(BaseBoxes):
         centers = torch.transpose(centers_T, -1, -2)
         self.tensor = torch.cat([centers, wh, t], dim=-1)
 
-    def project_(self, homography_matrix: Union[Tensor, np.ndarray]) -> None:
+    def project_(self,
+                 homography_matrix: Union[Tensor, np.ndarray],
+                 img_shape: Optional[Tuple[int, int]] = None) -> None:
         """Geometric transformat boxes in-place.
 
         Args:
             homography_matrix (Tensor or np.ndarray]):
                 Shape (3, 3) for geometric transformation.
+            img_shape (Tuple[int, int], optional): Image shape.
+                Defaults to None.
         """
         boxes = self.tensor
         if isinstance(homography_matrix, np.ndarray):
@@ -230,6 +234,9 @@ class RotatedBoxes(BaseBoxes):
         corners = torch.transpose(corners_T, -1, -2)
         # Convert to homogeneous coordinates by normalization
         corners = corners[..., :2] / corners[..., 2:3]
+        if img_shape is not None:
+            corners[:, 0] = corners[:, 0].clamp(0, img_shape[1])
+            corners[:, 1] = corners[:, 1].clamp(0, img_shape[0])
         self.tensor = self.corner2rbox(corners)
 
     @staticmethod

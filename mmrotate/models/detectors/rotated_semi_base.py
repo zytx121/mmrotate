@@ -51,6 +51,8 @@ class RotatedSemiBaseDetector(SemiBaseDetector):
             data_samples.gt_instances = copy.deepcopy(
                 pseudo_instances.gt_instances)
             boxlist_bboxes = RotatedBoxes(data_samples.gt_instances.bboxes)
-            boxlist_bboxes.project_(data_samples.homography_matrix)
+            boxlist_bboxes.project_(
+                data_samples.homography_matrix,
+                img_shape=data_samples.img_shape)
             data_samples.gt_instances.bboxes = boxlist_bboxes
         return self.filter_pseudo_instances(batch_data_samples)

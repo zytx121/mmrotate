@@ -1,22 +1,20 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
-
 from typing import List, Optional, Tuple
 
 import torch
+from mmdet.models.detectors import SoftTeacher
+from mmdet.models.utils import filter_gt_instances
+from mmdet.models.utils.misc import unpack_gt_instances
+from mmdet.structures import SampleList
+from mmdet.structures.bbox import bbox2roi
+from mmdet.utils import InstanceList
+from mmengine.structures import InstanceData
 from torch import Tensor
 
-from mmrotate.structures.bbox import  rbox2hbox
-from mmdet.models.utils import filter_gt_instances
-from mmdet.utils import InstanceList
 from mmrotate.registry import MODELS
-from mmdet.structures import SampleList
-from mmdet.models.detectors import SoftTeacher
-from mmrotate.structures.bbox import RotatedBoxes
-from mmdet.models.utils.misc import unpack_gt_instances
-from mmdet.structures.bbox import bbox2roi
+from mmrotate.structures.bbox import RotatedBoxes, rbox2hbox
 
-from mmengine.structures import InstanceData
 
 @MODELS.register_module()
 class RotatedSoftTeacher(SoftTeacher):
@@ -37,8 +35,8 @@ class RotatedSoftTeacher(SoftTeacher):
             Defaults to None.
     """
 
-    def filter_pseudo_instances(self,
-                                batch_data_samples: SampleList, wh_thr: tuple) -> SampleList: 
+    def filter_pseudo_instances(self, batch_data_samples: SampleList,
+                                wh_thr: tuple) -> SampleList:
         """Filter invalid pseudo instances from teacher model."""
         for data_samples in batch_data_samples:
             pseudo_bboxes = data_samples.gt_instances.bboxes
@@ -53,6 +51,7 @@ class RotatedSoftTeacher(SoftTeacher):
     def rpn_loss_by_pseudo_instances(self, x: Tuple[Tensor],
                                      batch_data_samples: SampleList) -> dict:
         """Calculate rpn loss from a batch of inputs and pseudo data samples.
+
         Args:
             x (tuple[Tensor]): Features from FPN.
             batch_data_samples (List[:obj:`DetDataSample`]): The batch
@@ -87,6 +86,7 @@ class RotatedSoftTeacher(SoftTeacher):
                                           batch_info: dict) -> dict:
         """Calculate classification loss from a batch of inputs and pseudo data
         samples.
+
         Args:
             x (tuple[Tensor]): List of multi-level img features.
             unsup_rpn_results_list (list[:obj:`InstanceData`]):
@@ -128,7 +128,7 @@ class RotatedSoftTeacher(SoftTeacher):
             sampling_results.append(sampling_result)
 
         selected_bboxes = [res.priors for res in sampling_results]
-        
+
         rois = bbox2roi(selected_bboxes)
         bbox_results = self.student.roi_head._bbox_forward(x, rois)
         # cls_reg_targets is a tuple of labels, label_weights,
@@ -154,7 +154,7 @@ class RotatedSoftTeacher(SoftTeacher):
                 selected_results_list,
                 rcnn_test_cfg=None,
                 rescale=False)
- 
+
             bg_score = torch.cat(
                 [results.scores[:, -1] for results in results_list])
             # cls_reg_targets[0] is labels
@@ -179,7 +179,9 @@ class RotatedSoftTeacher(SoftTeacher):
             data_samples.gt_instances = copy.deepcopy(
                 pseudo_instances.gt_instances)
             # boxlist_bboxes = RotatedBoxes(data_samples.gt_instances.bboxes)
-            data_samples.gt_instances.bboxes.project_(data_samples.homography_matrix)
+            data_samples.gt_instances.bboxes.project_(
+                data_samples.homography_matrix,
+                img_shape=data_samples.img_shape)
         wh_thr = self.semi_train_cfg.get('min_pseudo_bbox_wh', (1e-2, 1e-2))
         return self.filter_pseudo_instances(batch_data_samples, wh_thr)
 
@@ -212,7 +214,8 @@ class RotatedSoftTeacher(SoftTeacher):
 
         uncs_batch_data_samples = copy.deepcopy(batch_data_samples)
         for uncs_data_samples in uncs_batch_data_samples:
-            uncs_data_samples.gt_instances.bboxes = rbox2hbox(uncs_data_samples.gt_instances.bboxes)
+            uncs_data_samples.gt_instances.bboxes = rbox2hbox(
+                uncs_data_samples.gt_instances.bboxes)
 
         reg_uncs_list = self.compute_uncertainty_with_aug(
             x, uncs_batch_data_samples)
@@ -220,7 +223,9 @@ class RotatedSoftTeacher(SoftTeacher):
         for data_samples, reg_uncs in zip(batch_data_samples, reg_uncs_list):
             data_samples.gt_instances['reg_uncs'] = reg_uncs
             boxlist_bboxes = RotatedBoxes(data_samples.gt_instances.bboxes)
-            boxlist_bboxes.project_(data_samples.homography_matrix)
+            boxlist_bboxes.project_(
+                data_samples.homography_matrix,
+                img_shape=data_samples.ori_shape)
             data_samples.gt_instances.bboxes = boxlist_bboxes
 
         batch_info = {

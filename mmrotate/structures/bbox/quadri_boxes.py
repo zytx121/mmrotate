@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
-from typing import Tuple, TypeVar, Union
+from typing import Optional, Tuple, TypeVar, Union
 
 import cv2
 import numpy as np
@@ -165,12 +165,16 @@ class QuadriBoxes(BaseBoxes):
         corners = torch.transpose(corners_T, -1, -2)
         self.tensor = corners.reshape(*corners.shape[:-2], 8)
 
-    def project_(self, homography_matrix: Union[Tensor, np.ndarray]) -> None:
+    def project_(self,
+                 homography_matrix: Union[Tensor, np.ndarray],
+                 img_shape: Optional[Tuple[int, int]] = None) -> None:
         """Geometric transformat boxes in-place.
 
         Args:
             homography_matrix (Tensor or np.ndarray]):
                 Shape (3, 3) for geometric transformation.
+            img_shape (Tuple[int, int], optional): Image shape.
+                Defaults to None.
         """
         boxes = self.tensor
         if isinstance(homography_matrix, np.ndarray):
@@ -183,6 +187,9 @@ class QuadriBoxes(BaseBoxes):
         corners = torch.transpose(corners_T, -1, -2)
         # Convert to homogeneous coordinates by normalization
         corners = corners[..., :2] / corners[..., 2:3]
+        if img_shape is not None:
+            corners[:, 0] = corners[:, 0].clamp(0, img_shape[1])
+            corners[:, 1] = corners[:, 1].clamp(0, img_shape[0])
         self.tensor = corners.reshape(*corners.shape[:-2], 8)
 
     def rescale_(self, scale_factor: Tuple[float, float]) -> None:
