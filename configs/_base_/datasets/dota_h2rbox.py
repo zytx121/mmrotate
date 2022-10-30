@@ -3,20 +3,36 @@ dataset_type = 'mmdet.CocoDataset'
 data_root = 'data/split_ms_dota/'
 file_client_args = dict(backend='disk')
 
+branch_field = ['ws', 'ss']
+
+# pipeline used to augment data into different views
 train_pipeline = [
     dict(type='mmdet.LoadImageFromFile', file_client_args=file_client_args),
-    dict(type='mmdet.LoadAnnotations', with_bbox=True, with_mask=True),
-    dict(type='ConvertMask2BoxType', box_type='rbox'),
+    dict(type='mmdet.LoadAnnotations', with_bbox=True),
     dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
     dict(
         type='mmdet.RandomFlip',
         prob=0.75,
         direction=['horizontal', 'vertical', 'diagonal']),
-    dict(type='mmdet.PackDetInputs')
+    dict(
+        type='MultiBranch',
+        branch_field=['ws', 'ss'],
+        ss=dict(
+            type='RandomRotate', 
+            prob=1.0, 
+            angle_range=180,
+            rotate_type='ReflectRotate'),
+    ),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor', 'flip', 'flip_direction',
+                   'homography_matrix'))
 ]
+
 val_pipeline = [
     dict(type='mmdet.LoadImageFromFile', file_client_args=file_client_args),
-    dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
+    dict(type='mmdet.Resize', scale=(1024, 1024) keep_ratio=True),
     # avoid bboxes being resized
     dict(type='mmdet.LoadAnnotations', with_bbox=True, with_mask=True),
     dict(type='ConvertMask2BoxType', box_type='rbox'),
@@ -51,8 +67,8 @@ train_dataloader = dict(
         type=dataset_type,
         metainfo=metainfo,
         data_root=data_root,
-        ann_file='train/train.json',
-        data_prefix=dict(img='train/images/'),
+        ann_file='trainval/trainval.json',
+        data_prefix=dict(img='trainval/images/'),
         filter_cfg=dict(filter_empty_gt=True),
         pipeline=train_pipeline))
 val_dataloader = dict(
@@ -65,8 +81,8 @@ val_dataloader = dict(
         type=dataset_type,
         metainfo=metainfo,
         data_root=data_root,
-        ann_file='val/val.json',
-        data_prefix=dict(img='val/images/'),
+        ann_file='trainval/trainval.json',
+        data_prefix=dict(img='trainval/images/'),
         test_mode=True,
         pipeline=val_pipeline))
 test_dataloader = val_dataloader

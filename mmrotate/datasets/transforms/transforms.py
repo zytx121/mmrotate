@@ -12,6 +12,7 @@ from mmdet.structures.mask import PolygonMasks
 
 from mmrotate.registry import TRANSFORMS
 
+from mmdet.datasets.transforms.geometric import Rotate as MMDet_Rotate
 
 @TRANSFORMS.register_module()
 class ConvertBoxType(BaseTransform):
@@ -438,3 +439,23 @@ class ConvertMask2BoxType(BaseTransform):
         repr_str += f'(box_type_cls={self.box_type_cls}, '
         repr_str += f'keep_mask={self.keep_mask})'
         return repr_str
+
+
+#TODO： Refactor Rotate in MMdet to suport setting `border_mode`.
+@TRANSFORMS.register_module()
+class ReflectRotate(MMDet_Rotate):
+    """Rotate the images, bboxes, masks and segmentation map.
+    
+    Note: Replace 'constant' with 'reflect' in `border_mode`, which is
+    important for `H2RBox` detector.
+    
+    """
+
+    def _transform_img(self, results: dict, mag: float) -> None:
+        """Rotate the image."""
+        results['img'] = mmcv.imrotate(
+            results['img'],
+            mag,
+            border_value=self.img_border_value,
+            interpolation=self.interpolation,
+            border_mode='reflect')
