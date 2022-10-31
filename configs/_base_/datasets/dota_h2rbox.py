@@ -18,8 +18,8 @@ train_pipeline = [
         type='MultiBranch',
         branch_field=['ws', 'ss'],
         ss=dict(
-            type='RandomRotate', 
-            prob=1.0, 
+            type='RandomRotate',
+            prob=1.0,
             angle_range=180,
             rotate_type='ReflectRotate'),
     ),
@@ -32,7 +32,7 @@ train_pipeline = [
 
 val_pipeline = [
     dict(type='mmdet.LoadImageFromFile', file_client_args=file_client_args),
-    dict(type='mmdet.Resize', scale=(1024, 1024) keep_ratio=True),
+    dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
     # avoid bboxes being resized
     dict(type='mmdet.LoadAnnotations', with_bbox=True, with_mask=True),
     dict(type='ConvertMask2BoxType', box_type='rbox'),

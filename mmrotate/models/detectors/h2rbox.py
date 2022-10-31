@@ -11,7 +11,7 @@ from mmrotate.registry import MODELS
 
 @MODELS.register_module()
 class H2RBoxDetector(SingleStageDetector):
-    """Implementation of `RetinaNet <https://arxiv.org/abs/1708.02002>`_"""
+    """Implementation of `H2RBox <https://arxiv.org/abs/2210.06742>`_"""
 
     def __init__(self,
                  backbone: ConfigType,
@@ -33,6 +33,7 @@ class H2RBoxDetector(SingleStageDetector):
     def loss(self, multi_batch_inputs: Dict[str, Tensor],
              multi_batch_data_samples: Dict[str, SampleList]) -> dict:
         """Calculate losses from multi-branch inputs and data samples.
+
         Args:
             multi_batch_inputs (Dict[str, Tensor]): The dict of multi-branch
                 input images, each value with shape (N, C, H, W).
@@ -44,9 +45,6 @@ class H2RBoxDetector(SingleStageDetector):
         """
         x1 = self.extract_feat(multi_batch_inputs['a'])
         x2 = self.extract_feat(multi_batch_inputs['b'])
-        losses = self.bbox_head.loss(
-            x1, 
-            x2, 
-            multi_batch_data_samples['a'],
-            multi_batch_data_samples['b'])
+        losses = self.bbox_head.loss(x1, x2, multi_batch_data_samples['a'],
+                                     multi_batch_data_samples['b'])
         return losses

@@ -57,12 +57,9 @@ model = dict(
             alpha=0.25,
             loss_weight=1.0),
         loss_bbox=dict(type='mmdet.IoULoss', loss_weight=1.0),
-        loss_bbox_aug=dict(
-            type='H2RBoxLoss',
-            loss_weight=0.4,
-            center_loss_cfg=dict(type='L1Loss', loss_weight=0.0),
-            shape_loss_cfg=dict(type='IoULoss', loss_weight=1.0),
-            angle_loss_cfg=dict(type='L1Loss', loss_weight=1.0)),
+        loss_aug_center=dict(type='L1Loss', loss_weight=0.0),
+        loss_aug_shape=dict(type='IoULoss', loss_weight=0.4),
+        loss_aug_angle=dict(type='L1Loss', loss_weight=0.4),
         loss_centerness=dict(
             type='mmdet.CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0)),
     # training and testing settings
@@ -76,7 +73,9 @@ model = dict(
 
 # load hbox annotations
 train_pipeline = [
-    dict(type='mmdet.LoadImageFromFile', file_client_args={{_base_.file_client_args}}),
+    dict(
+        type='mmdet.LoadImageFromFile',
+        file_client_args={{_base_.file_client_args}}),
     dict(type='mmdet.LoadAnnotations', with_bbox=True),
     dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
     dict(
@@ -95,5 +94,4 @@ optim_wrapper = dict(
         type='AdamW',
         lr=0.0001,
         betas=(0.9, 0.999),
-        weight_decay=0.05)
-)
+        weight_decay=0.05))
