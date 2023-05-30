@@ -85,7 +85,7 @@ with gr.Blocks() as demo:
         with gr.Row():
             # paths, _ = get_file_list('demo')
             example_images = gr.Dataset(
-                components=[input_image], samples=["examples/demo.jpg", ],)
+                components=[input_image], samples=[['examples/demo.jpg'], ['examples/demo2.jpg']],)
 
         run_button.click(
             fn=inference,
