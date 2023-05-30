@@ -38,12 +38,12 @@ val_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile', backend_args=backend_args),
-    dict(type='Resize', scale=(1024, 1024), keep_ratio=True),
+    dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
     dict(
-        type='Pad', size=(1024, 1024),
+        type='mmdet.Pad', size=(1024, 1024),
         pad_val=dict(img=(114, 114, 114))),
     dict(
-        type='PackDetInputs',
+        type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                    'scale_factor'))
 ]
@@ -81,18 +81,18 @@ test_evaluator = val_evaluator
 
 # inference on test dataset and format the output results
 # for submission. Note: the test set has no annotation.
-# test_dataloader = dict(
-#     batch_size=8,
-#     num_workers=8,
-#     persistent_workers=False,
-#     drop_last=False,
-#     sampler=dict(type='DefaultSampler', shuffle=False),
-#     dataset=dict(
-#         type=dataset_type,
-#         data_root=data_root,
-#         data_prefix=dict(img_path='test/images/'),
-#         test_mode=True,
-#         pipeline=test_pipeline))
+test_dataloader = dict(
+    batch_size=1,
+    num_workers=1,
+    persistent_workers=False,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        data_prefix=dict(img_path='test/images/'),
+        test_mode=True,
+        pipeline=test_pipeline))
 # test_evaluator = dict(
 #     type='DOTAMetric',
 #     format_only=True,
