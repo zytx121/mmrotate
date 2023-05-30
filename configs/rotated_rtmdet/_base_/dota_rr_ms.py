@@ -74,7 +74,7 @@ val_dataloader = dict(
         data_prefix=dict(img_path='trainval/images/'),
         test_mode=True,
         pipeline=val_pipeline))
-test_dataloader = val_dataloader
+# test_dataloader = val_dataloader
 
 val_evaluator = dict(type='DOTAMetric', metric='mAP')
 test_evaluator = val_evaluator
