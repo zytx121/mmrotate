@@ -37,13 +37,13 @@ val_pipeline = [
                    'scale_factor'))
 ]
 test_pipeline = [
-    dict(type='mmdet.LoadImageFromFile', backend_args=backend_args),
-    dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
+    dict(type='LoadImageFromFile', backend_args=backend_args),
+    dict(type='Resize', scale=(1024, 1024), keep_ratio=True),
     dict(
-        type='mmdet.Pad', size=(1024, 1024),
+        type='Pad', size=(1024, 1024),
         pad_val=dict(img=(114, 114, 114))),
     dict(
-        type='mmdet.PackDetInputs',
+        type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                    'scale_factor'))
 ]
